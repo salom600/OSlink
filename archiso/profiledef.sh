@@ -1,9 +1,6 @@
 #!/bin/bash
 # AetherOS archiso profile definition
 # Boot mode names updated for current archiso (2024+)
-# Old: bios.syslinux.mbr → bios.syslinux
-# Old: uefi-x64.systemd-boot.esp → uefi.systemd-boot
-# Invalid: bios.syslinux.partition, uefi-x64.systemd-boot.legacy
 
 iso_name="AetherOS"
 iso_label="AETHER_$(date +%Y%m)"
@@ -16,10 +13,14 @@ arch="x86_64"
 pacman_conf="pacman.conf"
 packages=("packages.x86_64")
 
-# Custom profile settings
+# Custom file permissions — archiso requires UID:GID:MODE format (3 colon-separated fields)
+# Glob patterns are NOT supported; each file must be listed individually
 file_permissions=(
-  ['/etc/sudoers']='0440'
-  ['/etc/shadow']='0600'
-  ['/etc/aetheros/first-boot.sh']='0755'
-  ['/usr/local/bin/aetheros-*']='0755'
+  ["/etc/sudoers"]="0:0:0440"
+  ["/etc/shadow"]="0:0:0600"
+  ["/etc/aetheros/first-boot.sh"]="0:0:0755"
+  ["/usr/local/bin/aetheros-first-boot"]="0:0:0755"
+  ["/usr/local/bin/aetheros-gaming-mode"]="0:0:0755"
+  ["/usr/local/bin/aetheros-ram-monitor"]="0:0:0755"
+  ["/usr/local/bin/aetheros-build-helper.sh"]="0:0:0755"
 )
