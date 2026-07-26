@@ -89,8 +89,10 @@ pacman -Sy --noconfirm || {
 echo "Installing archiso..."
 pacman -S --noconfirm --needed archiso arch-install-scripts git
 
-which mkarchiso && echo "mkarchiso found!" || {
+command -v mkarchiso && echo "mkarchiso found at $(command -v mkarchiso)" || {
     echo "ERROR: mkarchiso not found after install!"
+    echo "Checking if archiso package was installed..."
+    pacman -Q archiso || echo "archiso package not installed"
     exit 1
 }
 

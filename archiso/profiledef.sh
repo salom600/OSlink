@@ -23,4 +23,5 @@ file_permissions=(
   ["/usr/local/bin/aetheros-gaming-mode"]="0:0:0755"
   ["/usr/local/bin/aetheros-ram-monitor"]="0:0:0755"
   ["/usr/local/bin/aetheros-build-helper.sh"]="0:0:0755"
+  ["/root/customize_airootfs.sh"]="0:0:0755"
 )

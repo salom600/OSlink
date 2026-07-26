@@ -55,7 +55,8 @@ grim
 slurp
 wofi
 mako
-nwg-dock-hyprland    # In official extra repo (not AUR-only)
+# NOTE: nwg-dock-hyprland REMOVED — AUR-only, not reliably in Chaotic-AUR
+# Will be installed post-install via: pacman -S nwg-dock-hyprland (from AUR/Chaotic-AUR)
 
 # === DESKTOP COMPONENTS ===
 waybar
@@ -185,7 +186,6 @@ earlyoom
 # === ARCHISO BUILD ===
 archiso
 arch-install-scripts
-squashfs-tools
 
 # === DEVELOPMENT (minimal, for build support) ===
 base-devel
@@ -207,5 +207,5 @@ ca-certificates
 openssl
 fzf
 bat
-eza
+eza    # From Chaotic-AUR (AUR-only, not in official repos)
 tldr
