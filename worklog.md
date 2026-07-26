@@ -56,3 +56,25 @@ Stage Summary:
   adds the key and switches to secure SigLevel for the live system.
 - Build should now proceed past the `which: command not found` error
   and handle Chaotic-AUR packages correctly
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Fix mkarchiso profile validation error (1 error encountered)
+
+Work Log:
+- User reported: "[mkarchiso] ERROR: 1 errors were encountered while validating the profile"
+- Used web-search + web-reader to fetch archiso mkarchiso source from GitLab
+- Found the validation code for bios.syslinux boot mode
+- The bios.syslinux validation requires the 'syslinux' package in packages.x86_64
+- Our package list was missing 'syslinux' → this caused exactly 1 validation error
+- Added 'syslinux' to the BOOT & FILESYSTEM section in packages.x86_64
+- Pushed fix (commit ada19ce) to GitHub
+
+Stage Summary:
+- Root cause: mkarchiso validates that 'syslinux' is in the package list when
+  bios.syslinux boot mode is used. Our package list didn't include it.
+- Fix: Added 'syslinux' to packages.x86_64
+- Also confirmed: bios.syslinux and uefi.systemd-boot ARE valid boot modes
+  in current archiso (uefi-x64.* modes are deprecated, replaced by uefi.systemd-boot)
+- Next potential issue: Chaotic-AUR packages during mkarchiso install
