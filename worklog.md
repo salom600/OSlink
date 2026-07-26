@@ -25,3 +25,34 @@ Stage Summary:
 - Architecture: Arch Linux base + Hyprland + Wayland + Calamares + bauh
 - Target: <200MB idle RAM with full gaming compatibility
 - CI/CD: GitHub Actions workflow with caching strategy and Chaotic-AUR integration
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix iterative build failures (6 rounds of CI/CD fixes)
+
+Work Log:
+- Fixed apt-get→Arch Docker container (original workflow used Ubuntu commands)
+- Fixed cp -r→rsync -a for profile copy (nested directory issue)
+- Fixed disk space by removing ~60-70GB pre-installed toolchains
+- Fixed archiso boot mode validation (bios.syslinux.mbr→bios.syslinux, uefi.systemd-boot)
+- Fixed file_permissions format (UID:GID:MODE instead of MODE only, no glob patterns)
+- Fixed 8 package names not found in Arch repos
+- Replaced `which mkarchiso` → `command -v mkarchiso` (which not in minimal Arch Docker)
+- Changed Chaotic-AUR SigLevel from Required DatabaseOptional → TrustAll
+  (mkarchiso creates fresh airootfs keyring without Chaotic-AUR key)
+- Created customize_airootfs.sh to fix SigLevel back to Required DatabaseOptional
+  after build, add Chaotic-AUR key to airootfs keyring, enable systemd services,
+  set up user environment skeleton (Hyprland/Waybar configs)
+- Removed nwg-dock-hyprland from packages.x86_64 (AUR-only, not in Chaotic-AUR)
+- Added customize script permissions to profiledef.sh
+- Pushed all fixes (commit 89ae269) to https://github.com/salom600/OSlink.git
+
+Stage Summary:
+- 6 files changed, 158 insertions, 7 deletions
+- Key insight: mkarchiso creates a FRESH airootfs keyring (only archlinux keys),
+  so Chaotic-AUR's key isn't trusted during package installation.
+  Using TrustAll allows build to proceed, then customize_airootfs.sh
+  adds the key and switches to secure SigLevel for the live system.
+- Build should now proceed past the `which: command not found` error
+  and handle Chaotic-AUR packages correctly
