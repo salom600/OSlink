@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Install AetherOS
+Comment=Install AetherOS on your computer
+Exec=calamares
+Icon=aetheros-installer
+Terminal=false
+Type=Application
+Categories=System;
+StartupNotify=true

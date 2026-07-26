@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#0a0a1a"/>
+  
+  <!-- Aether Symbol - A diamond/gem shape representing the "aether" concept -->
+  <!-- Outer glow -->
+  <filter id="glow">
+    <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+    <feMerge>
+      <feMergeNode in="coloredBlur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  
+  <!-- Main diamond -->
+  <polygon points="256,80 420,256 256,432 92,256" 
+           fill="none" stroke="#4fc3f7" stroke-width="4" filter="url(#glow)"/>
+  
+  <!-- Inner diamond -->
+  <polygon points="256,140 370,256 256,372 142,256" 
+           fill="rgba(79,195,247,0.15)" stroke="#4fc3f7" stroke-width="2"/>
+  
+  <!-- Center star -->
+  <circle cx="256" cy="256" r="20" fill="#4fc3f7" filter="url(#glow)"/>
+  
+  <!-- Radiating lines -->
+  <line x1="256" y1="256" x2="256" y2="80" stroke="#4fc3f7" stroke-width="1" opacity="0.5"/>
+  <line x1="256" y1="256" x2="420" y2="256" stroke="#4fc3f7" stroke-width="1" opacity="0.5"/>
+  <line x1="256" y1="256" x2="256" y2="432" stroke="#4fc3f7" stroke-width="1" opacity="0.5"/>
+  <line x1="256" y1="256" x2="92" y2="256" stroke="#4fc3f7" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Text -->
+  <text x="256" y="490" text-anchor="middle" font-family="Inter, sans-serif" 
+        font-size="24" font-weight="600" fill="#4fc3f7">AetherOS</text>
+</svg>

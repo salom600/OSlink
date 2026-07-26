@@ -1,0 +1,11 @@
+[Default Applications]
+webbrowser=firefox.desktop
+email=thunderbird.desktop
+filemanager=thunar.desktop
+terminal=foot.desktop
+texteditor=mousepad.desktop
+videoplayer=mpv.desktop
+audioplayer=mpv.desktop
+imageviewer=imv.desktop
+pdfviewer=zathura.desktop
+archive=file-roller.desktop

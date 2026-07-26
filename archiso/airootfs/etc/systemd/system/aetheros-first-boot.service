@@ -1,0 +1,15 @@
+[Unit]
+Description=AetherOS First Boot Setup
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/etc/aetheros/first-boot-done
+
+[Service]
+Type=oneshot
+ExecStart=/etc/aetheros/first-boot.sh
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

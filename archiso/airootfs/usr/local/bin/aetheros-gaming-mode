@@ -1,0 +1,55 @@
+#!/bin/bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║              AetherOS Gaming Mode Toggle                      ║
+# ║    Switches Waybar to minimal mode and optimizes for gaming   ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+GAMING_MODE_FILE="/tmp/aetheros-gaming-mode"
+
+if [ -f "$GAMING_MODE_FILE" ]; then
+    # Disable gaming mode - restore full Waybar
+    rm -f "$GAMING_MODE_FILE"
+    echo "Disabling gaming mode..."
+    
+    # Restore full Waybar
+    killall waybar
+    waybar &
+    
+    # Restore notifications
+    killall mako
+    mako &
+    
+    # Disable gamemode
+    gamemoded -d 2>/dev/null || true
+    
+    # Restore compositor effects
+    hyprctl keyword decoration:blur:enabled yes
+    hyprctl keyword decoration:drop_shadow yes
+    hyprctl keyword animations:enabled yes
+    
+    notify-send "AetherOS" "Gaming mode disabled. Full desktop restored."
+else
+    # Enable gaming mode - minimal Waybar, maximum performance
+    touch "$GAMING_MODE_FILE"
+    echo "Enabling gaming mode..."
+    
+    # Start gamemode
+    gamemoded -s 2>/dev/null || true
+    
+    # Minimal Waybar (only show clock and FPS)
+    killall waybar
+    waybar -c /etc/waybar/config-gaming &
+    
+    # Disable notifications during gaming
+    killall mako
+    
+    # Reduce compositor overhead for maximum FPS
+    hyprctl keyword decoration:blur:enabled no
+    hyprctl keyword decoration:drop_shadow no
+    hyprctl keyword animations:enabled no
+    
+    # Lower inactive opacity
+    hyprctl keyword decoration:inactive_opacity 0.5
+    
+    notify-send "AetherOS" "Gaming mode enabled. Maximum performance."
+fi

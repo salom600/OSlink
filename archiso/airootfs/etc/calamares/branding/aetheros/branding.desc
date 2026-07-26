@@ -1,0 +1,37 @@
+# AetherOS Calamares Branding Descriptor
+
+[branding]
+productName = AetherOS
+productUrl = https://github.com/salom600/AetherOS
+version = 0.1.0
+releaseNotesUrl = https://github.com/salom600/AetherOS/releases
+
+# Branding images
+welcomeImage = /usr/share/pixmaps/aetheros-welcome.png
+productLogo = /usr/share/pixmaps/aetheros-logo.png
+productIcon = /usr/share/pixmaps/aetheros-icon.png
+productWallpaper = /usr/share/pixmaps/aetheros-wallpaper.png
+slideshowImages = /usr/share/pixmaps/aetheros-slideshow/
+
+# Style
+style = modern
+windowExpanding = normal
+windowPlacement = center
+
+# Welcome page
+welcomeStyle = calm
+welcomeLogoCornerRadius = 12
+
+# Colors
+sidebarBackground = #0a0a1a
+sidebarText = #e0e0e0
+sidebarTextSelected = #4fc3f7
+sidebarTextHover = #0288d1
+
+# Font
+fontFamily = Inter, Noto Sans SC, sans-serif
+fontSize = 13
+fontBoldWeight = 600
+
+# Slideshow
+slideshow = aetheros-slideshow.qml

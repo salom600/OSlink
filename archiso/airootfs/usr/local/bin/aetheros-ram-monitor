@@ -1,0 +1,49 @@
+#!/bin/bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║              AetherOS RAM Monitor                             ║
+# ║     Reports current RAM usage vs 200MB target                  ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+TARGET_RAM=200  # MB
+
+# Get current RAM usage
+TOTAL_RAM=$(free -m | awk '/^Mem:/ {print $2}')
+USED_RAM=$(free -m | awk '/^Mem:/ {print $3}')
+AVAILABLE_RAM=$(free -m | awk '/^Mem:/ {print $7}')
+BUFFERS_CACHE=$(free -m | awk '/^Mem:/ {print $6}')
+
+# Calculate actual used (excluding buffers/cache, since they're reclaimable)
+ACTUAL_USED=$((USED_RAM - BUFFERS_CACHE))
+if [ "$ACTUAL_USED" -lt 0 ]; then
+    ACTUAL_USED=$USED_RAM
+fi
+
+# Check against target
+if [ "$ACTUAL_USED" -le "$TARGET_RAM" ]; then
+    STATUS="✅ PASS"
+    COLOR="green"
+else
+    STATUS="❌ FAIL"
+    COLOR="red"
+fi
+
+echo "╔══════════════════════════════════════════╗"
+echo "║       AetherOS RAM Usage Report          ║"
+echo "╠══════════════════════════════════════════╣"
+echo "║ Total RAM:        ${TOTAL_RAM} MB                   ║"
+echo "║ Used RAM:         ${USED_RAM} MB                   ║"
+echo "║ Available RAM:    ${AVAILABLE_RAM} MB                   ║"
+echo "║ Actual Used*:     ${ACTUAL_USED} MB                   ║"
+echo "║ Target:           ${TARGET_RAM} MB                   ║"
+echo "║ Status:           ${STATUS}                       ║"
+echo "╠══════════════════════════════════════════╣"
+echo "║ *Excludes reclaimable buffers/cache     ║"
+echo "╚══════════════════════════════════════════╝"
+
+# Top RAM consumers
+echo ""
+echo "Top 10 RAM consumers:"
+echo "─────────────────────"
+ps aux --sort=-%mem | head -11 | awk '{printf "%-20s %6s MB  (%s)\n", $11, $6/1024, $1}'
+
+exit 0

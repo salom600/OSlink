@@ -1,0 +1,50 @@
+#!/bin/bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║              AetherOS First Boot Wrapper                      ║
+# ║     Called by Hyprland autostart on first live session boot    ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+FLAG_FILE="/etc/aetheros/live-boot-done"
+
+# Only run on live session (not after Calamares install)
+if [ -f "/etc/aetheros/first-boot-done" ]; then
+    echo "System installed. Skipping live boot setup."
+    exit 0
+fi
+
+if [ -f "$FLAG_FILE" ]; then
+    echo "Live boot setup already completed."
+    exit 0
+fi
+
+echo "=== AetherOS Live Session Setup ==="
+
+# Set root password for live session (needed for Calamares)
+echo "root:aetheros" | chpasswd
+
+# Create default live session user
+useradd -m -G wheel,video,audio,network,storage,power,games,input,bluetooth -s /usr/bin/fish aether 2>/dev/null || true
+echo "aether:aetheros" | chpasswd
+
+# Copy default configs to live user home
+cp -r /etc/hyprland/ /home/aether/.config/hypr/ 2>/dev/null || true
+cp -r /etc/waybar/ /home/aether/.config/waybar/ 2>/dev/null || true
+
+# Set permissions
+chown -R aether:aether /home/aether/.config/ 2>/dev/null || true
+
+# Setup XDG directories for live user
+xdg-user-dirs-update --force 2>/dev/null || true
+
+# Configure auto-login for live session
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin aether --noclear %I \$TERM
+EOF
+
+# Mark as done
+date > "$FLAG_FILE"
+
+echo "=== AetherOS Live Session Setup Complete ==="

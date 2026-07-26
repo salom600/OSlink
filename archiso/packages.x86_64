@@ -1,0 +1,213 @@
+# AetherOS Package List - x86_64
+# Official Arch Linux repository packages
+# Grouped by category for maintainability
+
+# === BASE SYSTEM ===
+base
+linux-lts
+linux-firmware
+systemd
+systemd-sysvcompat
+dbus
+elogind
+
+# === BOOT & FILESYSTEM ===
+grub
+syslinux
+efibootmgr
+os-prober
+squashfs-tools
+dosfstools
+mtools
+ntfs-3g
+exfat-utils
+fuse2
+fuse3
+
+# === NETWORKING ===
+networkmanager
+dnsmasq
+iptables-nft
+nftables
+wireless_tools
+wpa_supplicant
+bluez
+bluez-utils
+
+# === AUDIO/VIDEO ===
+pipewire
+pipewire-alsa
+pipewire-jack
+pipewire-pulse
+pipewire-zeroconf
+wireplumber
+alsa-utils
+pavucontrol
+
+# === WAYLAND DISPLAY ===
+wayland
+xorg-xwayland
+hyprland
+hyprpaper
+swaylock-effects
+wl-clipboard
+cliphist
+grim
+slurp
+wofi
+mako
+nwg-dock-hyprland
+nwg-launchers
+
+# === DESKTOP COMPONENTS ===
+waybar
+foot
+thunar
+thunar-volman
+mousepad
+file-roller
+imv
+mpv
+zathura
+zathura-pdf-musl
+
+# === SHELL & UTILITIES ===
+fish
+bash
+sudo
+nano
+vim
+less
+man-db
+man-pages
+texinfo
+which
+hwinfo
+lshw
+usbutils
+pciutils
+smartmontools
+dmidecode
+inxi
+
+# === THEMING ===
+kvantum
+qt5ct
+qt6ct
+gtk-engine-murrine
+gtk-engines
+adwaita-icon-theme
+hicolor-icon-theme
+
+# === XDG & DESKTOP INTEGRATION ===
+xdg-utils
+xdg-user-dirs
+xdg-desktop-portal
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+desktop-file-utils
+
+# === POLKIT & AUTH ===
+polkit
+polkit-gnome
+
+# === APP STORE ===
+bauh
+flatpak
+snapd
+
+# === INSTALLER ===
+calamares
+calamares-branding-aetheros
+
+# === ARCHIVE & COMPRESS ===
+tar
+unzip
+zip
+p7zip
+rsync
+curl
+wget
+
+# === FONT ===
+ttf-inter
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+noto-fonts-extra
+
+# === GAMING ===
+steam
+wine
+gamescope
+gamemode
+lib32-gamemode
+mangohud
+lib32-mangohud
+vulkan-radeon
+lib32-vulkan-radeon
+vulkan-icd-loader
+lib32-vulkan-icd-loader
+mesa
+lib32-mesa
+vulkan-mesa-layers
+lib32-vulkan-mesa-layers
+
+# === NVIDIA (optional, auto-detected) ===
+nvidia-dkms
+nvidia-utils
+lib32-nvidia-utils
+nvidia-settings
+egl-wayland
+
+# === CODECS ===
+ffmpeg
+gst-plugins-base
+gst-plugins-good
+gst-plugins-bad
+gst-plugins-ugly
+gst-libav
+libdvdcss
+libdvdnav
+libdvdread
+
+# === POWER & LAPTOP ===
+acpid
+upower
+tlp
+brightnessctl
+
+# === SECURITY ===
+firejail
+apparmor
+earlyoom
+
+# === ARCHISO BUILD ===
+archiso
+arch-install-scripts
+squashfs-tools
+
+# === DEVELOPMENT (minimal, for build support) ===
+base-devel
+git
+cmake
+meson
+python
+python-pip
+
+# === VIRTUALIZATION SUPPORT ===
+qemu-guest-agent
+spice-vdagent
+
+# === MISCELLANEOUS ===
+zram-generator
+glibc
+lib32-glibc
+ca-certificates
+openssl
+crda
+haveged
+fzf
+bat
+exa
+tldr
