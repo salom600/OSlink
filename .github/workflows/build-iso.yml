@@ -52,262 +52,172 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ── Step 3: Setup Arch Linux Build Environment ────────────
-      - name: Install Arch Linux Dependencies
-        run: |
-          # Update system
-          sudo apt-get update
-          
-          # Install base dependencies for building
-          sudo apt-get install -y \
-            arch-install-scripts \
-            squashfs-tools \
-            dosfstools \
-            mtools \
-            xorriso \
-            grub-pc-bin \
-            grub-efi-amd64-bin \
-            syslinux \
-            isolinux \
-            git \
-            curl \
-            wget \
-            python3 \
-            python3-pip \
-            cpio \
-            gzip \
-            bzip2 \
-            lz4 \
-            zstd \
-            e2fsprogs \
-            fuse2 \
-            fuse3 \
-            ntfs-3g \
-            exfat-utils \
-            p7zip-full \
-            rsync
-
-      # ── Step 4: Setup Pacman Cache ────────────────────────────
+      # ── Step 3: Cache Pacman Packages ─────────────────────────
       - name: Cache Pacman Packages
         uses: actions/cache@v4
         with:
-          path: /var/cache/pacman/pkg
-          key: pacman-${{ hashFiles('archiso/packages.x86_64') }}
+          path: pacman-cache
+          key: pacman-${{ hashFiles('archiso/packages.x86_64') }}-v2
           restore-keys: |
-            pacman-
+            pacman-v2-
 
-      - name: Cache Build Artifacts
-        uses: actions/cache@v4
-        with:
-          path: /tmp/aetheros-cache
-          key: build-${{ github.sha }}
-          restore-keys: |
-            build-
-
-      # ── Step 5: Setup Arch Linux Pacman ───────────────────────
-      - name: Configure Arch Linux Package Manager
+      # ── Step 4: Prepare Build Environment on Host ─────────────
+      - name: Prepare Build Directory
         run: |
-          # Create pacman configuration
-          sudo mkdir -p /etc/pacman.d
-          
-          # Copy AetherOS pacman.conf
-          sudo cp archiso/pacman.conf /etc/pacman.conf
-          
-          # Setup mirrorlist
-          sudo mkdir -p /etc/pacman.d
-          echo 'Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist
-          echo 'Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch' | sudo tee -a /etc/pacman.d/mirrorlist
-          
-          # Initialize pacman keyring
-          sudo pacman-key --init
-          sudo pacman-key --populate archlinux
-          
-          # Add Chaotic-AUR key
-          sudo pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888
-          sudo pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888
-
-      # ── Step 6: Install archiso ────────────────────────────────
-      - name: Install archiso Package
-        run: |
-          sudo pacman -Sy --noconfirm archiso arch-install-scripts
-          
-          # Verify archiso is installed
-          which mkarchiso || echo "Warning: mkarchiso not found, will need alternative approach"
-
-      # ── Step 7: Build AetherOS Profile ────────────────────────
-      - name: Prepare AetherOS Build Profile
-        run: |
-          # Create build directory structure
-          sudo mkdir -p ${BUILD_DIR}/work
-          sudo mkdir -p ${BUILD_DIR}/out
-          
-          # Copy archiso profile to build directory
+          sudo mkdir -p ${BUILD_DIR}/work ${BUILD_DIR}/out ${BUILD_DIR}/profile
+          sudo mkdir -p pacman-cache
+          # Copy repository files to build area
           sudo cp -r archiso/ ${BUILD_DIR}/profile/
-          
-          # Copy scripts
-          sudo cp -r scripts/ ${BUILD_DIR}/scripts/
-          
-          # Copy overlays
-          sudo cp -r overlays/ ${BUILD_DIR}/overlays/
-          
+          sudo cp -r scripts/ ${BUILD_DIR}/scripts/ 2>/dev/null || true
+          sudo cp -r overlays/ ${BUILD_DIR}/overlays/ 2>/dev/null || true
           # Make scripts executable
-          sudo chmod +x ${BUILD_DIR}/scripts/*.sh
-          sudo chmod +x ${BUILD_DIR}/profile/airootfs/etc/aetheros/*.sh
-          sudo chmod +x ${BUILD_DIR}/profile/airootfs/usr/local/bin/aetheros-*
+          sudo find ${BUILD_DIR} -name "*.sh" -exec chmod +x {} \;
+          sudo find ${BUILD_DIR}/profile/airootfs/usr/local/bin -type f -exec chmod +x {} \;
+          sudo find ${BUILD_DIR}/profile/airootfs/etc/aetheros -name "*.sh" -exec chmod +x {} \;
 
-      # ── Step 8: Setup Chaotic-AUR Repository ──────────────────
-      - name: Add Chaotic-AUR Repository
+      # ── Step 5: Build Inside Arch Linux Docker Container ──────
+      # The entire archiso/pacman build happens inside an Arch container.
+      # Ubuntu host is only used for disk space management and cache.
+      - name: Initialize Arch Linux Container
         run: |
-          # Add Chaotic-AUR to pacman config
-          sudo cp archiso/airootfs/etc/pacman.d/chaotic-aur.conf /etc/pacman.d/chaotic-aur.conf
-          
-          # Add to pacman.conf
-          echo '' | sudo tee -a /etc/pacman.conf
-          echo '[chaotic-aur]' | sudo tee -a /etc/pacman.conf
-          echo 'SigLevel = Never' | sudo tee -a /etc/pacman.conf
-          echo 'Server = https://cdn-mirror.chaotic.cx/$repo/$arch' | sudo tee -a /etc/pacman.conf
+          # Pull the latest Arch Linux Docker image
+          docker pull archlinux:latest
 
-      # ── Step 9: Download and Install Packages ─────────────────
-      - name: Install AetherOS Packages
+          # Verify Docker is working
+          docker run --rm archlinux:latest pacman --version
+
+      - name: Initialize Pacman Keyring & Repos
         run: |
-          # Read package list
-          PACKAGES=$(cat archiso/packages.x86_64 | grep -v '^#' | grep -v '^$')
-          
-          # Install packages (this is the longest step)
-          echo "Installing ${PACKAGES} packages..."
-          sudo pacman -Sy --noconfirm --needed ${PACKAGES} || true
-          
-          # Clean old cache versions
-          sudo paccache -r || true
-          
-          # Check disk space after install
-          df -h
+          docker run --rm \
+            -v ${BUILD_DIR}:${BUILD_DIR} \
+            -v pacman-cache:/var/cache/pacman/pkg \
+            -v ${PWD}/archiso/pacman.conf:/etc/pacman.conf \
+            archlinux:latest \
+            bash -c "
+              # Initialize pacman keyring
+              pacman-key --init
+              pacman-key --populate archlinux
 
-      # ── Step 10: Apply System Overlays ────────────────────────
-      - name: Apply AetherOS Overlays
+              # Add Chaotic-AUR keyring
+              pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888 || true
+              pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888 || true
+
+              # Setup mirrorlist
+              echo 'Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch' > /etc/pacman.d/mirrorlist
+              echo 'Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch' >> /etc/pacman.d/mirrorlist
+
+              # Update package databases
+              pacman -Sy --noconfirm
+
+              echo 'Pacman keyring initialized successfully'
+            "
+
+      - name: Install archiso Build Tool
         run: |
-          # Copy theme overlays
-          if [ -d "overlays/theme" ]; then
-            sudo cp -r overlays/theme/* ${BUILD_DIR}/profile/airootfs/ 2>/dev/null || true
-          fi
-          
-          # Copy branding overlays
-          if [ -d "overlays/branding" ]; then
-            sudo cp -r overlays/branding/* ${BUILD_DIR}/profile/airootfs/usr/share/pixmaps/ 2>/dev/null || true
-          fi
-          
-          # Run system optimization script
-          sudo bash scripts/optimize-system.sh || true
+          docker run --rm \
+            -v pacman-cache:/var/cache/pacman/pkg \
+            -v ${PWD}/archiso/pacman.conf:/etc/pacman.conf \
+            archlinux:latest \
+            bash -c "
+              pacman-key --init
+              pacman-key --populate archlinux
+              pacman -Sy --noconfirm archiso arch-install-scripts git
+              which mkarchiso && echo 'mkarchiso found' || echo 'mkarchiso NOT found'
+            "
 
-      # ── Step 11: Setup Calamares ───────────────────────────────
-      - name: Configure Calamares Installer
-        run: |
-          # Calamares configs are already in the overlay
-          # Verify they exist
-          ls -la ${BUILD_DIR}/profile/airootfs/etc/calamares/ || echo "Warning: Calamares configs missing"
-
-      # ── Step 12: Generate SquashFS ─────────────────────────────
-      - name: Build SquashFS Root Filesystem
-        run: |
-          # Create the squashfs filesystem
-          # This compresses the root filesystem for the ISO
-          sudo mkdir -p ${BUILD_DIR}/work/airootfs
-          
-          # Copy the root filesystem
-          sudo rsync -a --exclude='var/cache/pacman/pkg' \
-            --exclude='var/log' \
-            --exclude='var/tmp' \
-            / ${BUILD_DIR}/work/airootfs/rootfs/
-          
-          # Create squashfs with zstd compression (best ratio)
-          sudo mksquashfs ${BUILD_DIR}/work/airootfs/rootfs \
-            ${BUILD_DIR}/work/airootfs/rootfs.sqfs \
-            -comp zstd -Xcompression-level 19 \
-            -no-progress \
-            -no-xattrs \
-            -no-fragments \
-            -all-root
-
-      # ── Step 13: Generate ISO ──────────────────────────────────
+      # ── Step 6: Build the ISO inside Arch Container ───────────
       - name: Build AetherOS ISO
         run: |
-          # Use mkarchiso if available, otherwise use manual approach
-          if command -v mkarchiso &> /dev/null; then
-            sudo mkarchiso -v -w ${BUILD_DIR}/work -o ${BUILD_DIR}/out ${BUILD_DIR}/profile
-          else
-            # Manual ISO build approach (fallback for Ubuntu runners)
-            echo "Building ISO manually..."
-            
-            # Create ISO directory structure
-            sudo mkdir -p ${BUILD_DIR}/iso/aetheros/boot
-            sudo mkdir -p ${BUILD_DIR}/iso/aetheros/airootfs
-            sudo mkdir -p ${BUILD_DIR}/iso/boot/grub
-            sudo mkdir -p ${BUILD_DIR}/iso/isolinux
-            
-            # Copy kernel and initramfs
-            sudo cp /boot/vmlinuz-linux-lts ${BUILD_DIR}/iso/aetheros/boot/vmlinuz-linux-lts 2>/dev/null || \
-              sudo cp /boot/vmlinuz* ${BUILD_DIR}/iso/aetheros/boot/vmlinuz-linux-lts 2>/dev/null || true
-            
-            sudo cp /boot/initramfs-linux-lts.img ${BUILD_DIR}/iso/aetheros/boot/initramfs-linux-lts.img 2>/dev/null || \
-              sudo cp /boot/initramfs* ${BUILD_DIR}/iso/aetheros/boot/initramfs-linux-lts.img 2>/dev/null || true
-            
-            # Copy squashfs
-            sudo cp ${BUILD_DIR}/work/airootfs/rootfs.sqfs ${BUILD_DIR}/iso/aetheros/airootfs/
-            
-            # Copy bootloader configs
-            sudo cp archiso/grub/grub.cfg ${BUILD_DIR}/iso/boot/grub/grub.cfg
-            sudo cp archiso/syslinux/syslinux.cfg ${BUILD_DIR}/iso/isolinux/isolinux.cfg
-            
-            # Copy SYSLINUX files
-            sudo cp /usr/lib/ISOLINUX/isolinux.bin ${BUILD_DIR}/iso/isolinux/ 2>/dev/null || true
-            sudo cp /usr/lib/syslinux/modules/bios/*.c32 ${BUILD_DIR}/iso/isolinux/ 2>/dev/null || true
-            sudo cp /usr/lib/ISOLINUX/ldlinux.c32 ${BUILD_DIR}/iso/isolinux/ 2>/dev/null || true
-            
-            # Copy GRUB files
-            sudo cp /usr/lib/grub/i386-pc/*.mod ${BUILD_DIR}/iso/boot/grub/i386-pc/ 2>/dev/null || \
-              sudo mkdir -p ${BUILD_DIR}/iso/boot/grub/i386-pc && \
-              sudo grub-mkimage -O i386-pc -o ${BUILD_DIR}/iso/boot/grub/i386-pc/core.img \
-                biosdisk iso9660 normal search linux ls boot 2>/dev/null || true
-            
-            # Generate ISO
-            ISO_FILENAME="${ISO_NAME}-$(date +%Y%m%d)-x86_64.iso"
-            
-            sudo xorriso -as mkisofs \
-              -iso-level 3 \
-              -full-iso9660-filenames \
-              -appid "${ISO_NAME}" \
-              -publisher "AetherOS Project" \
-              -V "AETHER_$(date +%Y%m)" \
-              -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-              -eltorito-boot isolinux/isolinux.bin \
-              -eltorito-catalog isolinux/boot.cat \
-              -no-emul-boot \
-              -boot-load-size 4 \
-              -boot-info-table \
-              -eltorito-alt-boot \
-              -e boot/grub/i386-pc/efi.img \
-              -no-emul-boot \
-              -isohybrid-gpt-hfsplus \
-              -output "${BUILD_DIR}/out/${ISO_FILENAME}" \
-              ${BUILD_DIR}/iso/
-            
-            echo "ISO built: ${BUILD_DIR}/out/${ISO_FILENAME}"
-          fi
-          
-          # Verify ISO exists
-          ls -lh ${BUILD_DIR}/out/*.iso || echo "Warning: No ISO file found"
+          # This is the main build step. We run mkarchiso inside the Arch container
+          # with volume mounts for the profile, work directory, and output directory.
+          docker run --rm \
+            -v ${BUILD_DIR}/profile:${BUILD_DIR}/profile \
+            -v ${BUILD_DIR}/work:${BUILD_DIR}/work \
+            -v ${BUILD_DIR}/out:${BUILD_DIR}/out \
+            -v pacman-cache:/var/cache/pacman/pkg \
+            -v ${PWD}/archiso/pacman.conf:/etc/pacman.conf \
+            -v ${PWD}/archiso/airootfs/etc/pacman.d/chaotic-aur.conf:/etc/pacman.d/chaotic-aur.conf \
+            archlinux:latest \
+            bash -c "
+              set -e
 
-      # ── Step 14: Generate checksums ────────────────────────────
-      - name: Generate ISO Checksums
+              echo '=== AetherOS ISO Build ==='
+
+              # Re-initialize keyring (Docker containers start fresh)
+              pacman-key --init
+              pacman-key --populate archlinux
+
+              # Add Chaotic-AUR key
+              pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888 || true
+              pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888 || true
+
+              # Setup mirrorlist
+              echo 'Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch' > /etc/pacman.d/mirrorlist
+              echo 'Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch' >> /etc/pacman.d/mirrorlist
+
+              # Ensure Chaotic-AUR repo is in pacman.conf
+              grep -q 'chaotic-aur' /etc/pacman.conf || {
+                echo '' >> /etc/pacman.conf
+                echo '[chaotic-aur]' >> /etc/pacman.conf
+                echo 'SigLevel = Required DatabaseOptional' >> /etc/pacman.conf
+                echo 'Server = https://cdn-mirror.chaotic.cx/\$repo/\$arch' >> /etc/pacman.conf
+              }
+
+              # Update databases
+              pacman -Sy --noconfirm
+
+              # Install archiso (required for mkarchiso)
+              pacman -S --noconfirm --needed archiso arch-install-scripts git
+
+              # Verify mkarchiso exists
+              which mkarchiso
+              echo 'mkarchiso found! Proceeding with build...'
+
+              # Fix profiledef.sh syntax (must be bash, not zsh)
+              sed -i 's|^#!/usr/bash|#!/bin/bash|' ${BUILD_DIR}/profile/profiledef.sh || true
+
+              # Make sure scripts are executable inside the container
+              find ${BUILD_DIR}/profile -name '*.sh' -exec chmod +x {} \;
+              find ${BUILD_DIR}/profile/airootfs/usr/local/bin -type f -exec chmod +x {} \;
+
+              # Copy Chaotic-AUR conf into the profile's pacman.d
+              mkdir -p ${BUILD_DIR}/profile/airootfs/etc/pacman.d/
+              cp /etc/pacman.d/chaotic-aur.conf ${BUILD_DIR}/profile/airootfs/etc/pacman.d/chaotic-aur.conf || true
+
+              # Build the ISO using mkarchiso
+              # -v = verbose, -w = work dir, -o = output dir
+              mkarchiso -v -w ${BUILD_DIR}/work -o ${BUILD_DIR}/out ${BUILD_DIR}/profile
+
+              echo '=== Build Complete ==='
+              ls -lh ${BUILD_DIR}/out/
+            "
+
+      # ── Step 7: Verify ISO and Generate Checksums ─────────────
+      - name: Verify ISO and Generate Checksums
         run: |
-          cd ${BUILD_DIR}/out
-          sudo sha256sum *.iso > SHA256SUMS
-          sudo md5sum *.iso > MD5SUMS
-          
-          cat SHA256SUMS
-          cat MD5SUMS
+          # Check if ISO was produced
+          if ls ${BUILD_DIR}/out/*.iso 1>/dev/null 2>&1; then
+            ISO_FILE=$(ls ${BUILD_DIR}/out/*.iso | head -1)
+            ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
+            echo "ISO built successfully: $ISO_FILE ($ISO_SIZE)"
+            
+            # Generate checksums
+            cd ${BUILD_DIR}/out
+            sha256sum *.iso > SHA256SUMS
+            md5sum *.iso > MD5SUMS
+            
+            echo "=== SHA256 ==="
+            cat SHA256SUMS
+            echo "=== MD5 ==="
+            cat MD5SUMS
+          else
+            echo "ERROR: No ISO file found in ${BUILD_DIR}/out/"
+            ls -la ${BUILD_DIR}/out/ || echo "Output directory does not exist"
+            ls -la ${BUILD_DIR}/work/ || echo "Work directory does not exist"
+            exit 1
+          fi
 
-      # ── Step 15: Upload ISO to GitHub Releases ─────────────────
+      # ── Step 8: Upload ISO to GitHub Releases ─────────────────
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
@@ -322,9 +232,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 16: Upload ISO as Artifact ────────────────────────
+      # ── Step 9: Upload ISO as Artifact ────────────────────────
       - name: Upload ISO as Artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: AetherOS-ISO
           path: |
@@ -332,9 +243,9 @@ jobs:
             /tmp/aetheros-build/out/SHA256SUMS
             /tmp/aetheros-build/out/MD5SUMS
           retention-days: 30
-          compression-level: 0  # ISO is already compressed, don't double-compress
+          compression-level: 0  # ISO is already compressed
 
-      # ── Step 17: Build Report ──────────────────────────────────
+      # ── Step 10: Build Report ──────────────────────────────────
       - name: Generate Build Report
         if: always()
         run: |
@@ -347,14 +258,14 @@ jobs:
           df -h
           echo ""
           
-          if [ -f /tmp/aetheros-build/out/*.iso ]; then
+          if ls /tmp/aetheros-build/out/*.iso 1>/dev/null 2>&1; then
             ISO_FILE=$(ls /tmp/aetheros-build/out/*.iso | head -1)
             ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
             echo "ISO File: $ISO_FILE"
             echo "ISO Size: $ISO_SIZE"
           else
-            echo "Warning: ISO not found"
+            echo "Warning: ISO not found or build failed"
           fi
           
           echo ""
-          echo "=== Build Complete ==="
+          echo "=== Build Report Complete ==="

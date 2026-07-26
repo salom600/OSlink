@@ -1,4 +1,4 @@
-#!/usr/bash
+#!/bin/bash
 # AetherOS archiso profile definition
 
 iso_name="AetherOS"
@@ -12,7 +12,7 @@ arch="x86_64"
 pacman_conf="pacman.conf"
 grub_prefix="grub"
 packages=("packages.x86_64")
-# AUR packages handled separately via post-install script
+# AUR/Chaotic-AUR packages handled separately via post-install script
 
 # Custom profile settings
 file_permissions=(
@@ -20,5 +20,4 @@ file_permissions=(
   ['/etc/shadow']='0600'
   ['/etc/aetheros/first-boot.sh']='0755'
   ['/usr/local/bin/aetheros-*']='0755'
-  ['/usr/local/bin/first-boot-setup']='0755'
 )

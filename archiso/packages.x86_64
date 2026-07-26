@@ -1,5 +1,6 @@
 # AetherOS Package List - x86_64
-# Official Arch Linux repository packages
+# Only packages from official Arch repos OR Chaotic-AUR (pre-built binaries)
+# AUR-only packages WITHOUT Chaotic-AUR availability are excluded
 # Grouped by category for maintainability
 
 # === BASE SYSTEM ===
@@ -9,7 +10,7 @@ linux-firmware
 systemd
 systemd-sysvcompat
 dbus
-elogind
+# NOTE: elogind REMOVED — systemd already provides systemd-logind
 
 # === BOOT & FILESYSTEM ===
 grub
@@ -20,7 +21,7 @@ squashfs-tools
 dosfstools
 mtools
 ntfs-3g
-exfat-utils
+exfatprogs          # Renamed from exfat-utils (removed from Arch repos)
 fuse2
 fuse3
 
@@ -49,15 +50,16 @@ wayland
 xorg-xwayland
 hyprland
 hyprpaper
-swaylock-effects
+swaylock              # swaylock-effects is AUR-only; use swaylock from official repos
 wl-clipboard
 cliphist
 grim
 slurp
 wofi
 mako
-nwg-dock-hyprland
-nwg-launchers
+# NOTE: nwg-dock-hyprland and nwg-launchers are AUR-only
+# They will be installed from Chaotic-AUR if available, otherwise skipped
+# Dock alternative: we use a custom waybar config to emulate dock behavior
 
 # === DESKTOP COMPONENTS ===
 waybar
@@ -95,7 +97,7 @@ kvantum
 qt5ct
 qt6ct
 gtk-engine-murrine
-gtk-engines
+# NOTE: gtk-engines REMOVED — GTK2-era legacy, no longer in official repos
 adwaita-icon-theme
 hicolor-icon-theme
 
@@ -112,19 +114,20 @@ polkit
 polkit-gnome
 
 # === APP STORE ===
-bauh
+# NOTE: bauh is AUR-only — handled via Chaotic-AUR or post-install download
 flatpak
-snapd
+# NOTE: snapd REMOVED — AUR-only and unnecessary overhead for AetherOS
 
 # === INSTALLER ===
 calamares
-calamares-branding-aetheros
+# NOTE: calamares-branding-aetheros REMOVED — custom package, not in any repo
+# Branding is handled by overlay files in airootfs/etc/calamares/branding/
 
 # === ARCHIVE & COMPRESS ===
 tar
 unzip
 zip
-p7zip
+7zip                # Renamed from p7zip (deprecated, removed from repos)
 rsync
 curl
 wget
@@ -153,7 +156,7 @@ lib32-mesa
 vulkan-mesa-layers
 lib32-vulkan-mesa-layers
 
-# === NVIDIA (optional, auto-detected) ===
+# === NVIDIA (optional, auto-detected on first boot) ===
 nvidia-dkms
 nvidia-utils
 lib32-nvidia-utils
@@ -205,9 +208,9 @@ glibc
 lib32-glibc
 ca-certificates
 openssl
-crda
-haveged
+# NOTE: crda REMOVED — obsolete, kernel handles regulatory domain natively
+# NOTE: haveged REMOVED — obsolete, modern kernels use getrandom()
 fzf
 bat
-exa
+eza                 # Renamed from exa (unmaintained, removed from repos)
 tldr
