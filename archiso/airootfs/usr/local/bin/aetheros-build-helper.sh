@@ -1,7 +1,7 @@
 #!/bin/bash
 # ╔══════════════════════════════════════════════════════════════╗
 # ║       AetherOS Build Helper - Runs Inside Arch Container     ║
-# ║  Handles: pacman init, Chaotic-AUR setup, archiso, ISO build  ║
+# ║  Handles: pacman init, ALL repos, Chaotic-AUR, archiso build  ║
 # ╚══════════════════════════════════════════════════════════════╝
 set -e
 
@@ -13,103 +13,109 @@ echo "║         AetherOS ISO Build (Arch Container)  ║"
 echo "╚══════════════════════════════════════════════╝"
 echo ""
 
-# ── 1. Initialize pacman keyring ─────────────────────────────────
-echo "[1/7] Initializing pacman keyring..."
+# ── 1. Write a COMPLETE pacman.conf with ALL repos ────────────────
+# CRITICAL: The archlinux:latest Docker container only has [core]!
+# Most packages are in [extra] and [multilib]. We must enable them.
+echo "[1/7] Writing complete pacman.conf with all repos..."
+
+cat > /etc/pacman.conf << 'PACMANCONF'
+[options]
+HoldPkg           = pacman glibc
+Architecture      = auto
+CheckSpace
+Color
+VerbosePkgLists
+ParallelDownloads = 10
+
+SigLevel    = Required DatabaseOptional
+LocalSigLevel = Optional
+RemoteSigLevel = Required
+
+[core]
+Include = /etc/pacman.d/mirrorlist
+
+[extra]
+Include = /etc/pacman.d/mirrorlist
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist
+
+[chaotic-aur]
+SigLevel = Required DatabaseOptional
+Server = https://cdn-mirror.chaotic.cx/$repo/$arch
+PACMANCONF
+
+echo "Written pacman.conf with: core, extra, multilib, chaotic-aur"
+
+# ── 2. Initialize pacman keyring ──────────────────────────────────
+echo "[2/7] Initializing pacman keyring..."
 pacman-key --init
 pacman-key --populate archlinux
 
-# ── 2. Setup mirrorlist ──────────────────────────────────────────
-echo "[2/7] Setting up mirrorlist..."
+# ── 3. Setup mirrorlist ──────────────────────────────────────────
+echo "[3/7] Setting up mirrorlist..."
 mkdir -p /etc/pacman.d
 cat > /etc/pacman.d/mirrorlist << 'MIRRORLIST'
 Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
 Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 Server = https://mirror.f4st.org/archlinux/$repo/os/$arch
 Server = https://archlinux.thaller.ws/archlinux/$repo/os/$arch
+Server = https://arch.mirrors.bunnys.org/archlinux/$repo/os/$arch
 MIRRORLIST
 
-# ── 3. Add Chaotic-AUR repository ────────────────────────────────
-echo "[3/7] Adding Chaotic-AUR repository..."
-
-# Receive and sign the Chaotic-AUR key
+# ── 4. Add Chaotic-AUR key ────────────────────────────────────────
+echo "[4/7] Adding Chaotic-AUR keyring..."
 pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888 || {
-    echo "Warning: Could not receive Chaotic-AUR key via pacman-key"
-    echo "Will add Chaotic-AUR with relaxed SigLevel as fallback"
+    echo "Warning: Could not receive Chaotic-AUR key"
+    echo "Retrying with keyserver..."
+    pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888 --keyserver keyserver.ubuntu.com || {
+        echo "Failed to receive Chaotic-AUR key. Trying TrustAll approach..."
+        # Fallback: change SigLevel to TrustAll for Chaotic-AUR only
+        sed -i 's/SigLevel = Required DatabaseOptional/SigLevel = TrustAll/' /etc/pacman.conf
+    }
 }
+pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888 || true
 
-pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888 || {
-    echo "Warning: Could not locally sign Chaotic-AUR key"
-}
-
-# Add Chaotic-AUR to system pacman.conf (for building archiso itself)
-grep -q 'chaotic-aur' /etc/pacman.conf || {
-    echo '' >> /etc/pacman.conf
-    echo '[chaotic-aur]' >> /etc/pacman.conf
-    echo 'SigLevel = Required DatabaseOptional' >> /etc/pacman.conf
-    echo 'Server = https://cdn-mirror.chaotic.cx/$repo/$arch' >> /etc/pacman.conf
-}
-
-# ── 4. Update package databases ──────────────────────────────────
-echo "[4/7] Updating package databases..."
+# ── 5. Sync all repo databases ────────────────────────────────────
+echo "[5/7] Syncing package databases..."
 pacman -Sy --noconfirm || {
-    echo "Warning: Some repos failed to sync. Trying without Chaotic-AUR..."
-    # Fallback: remove Chaotic-AUR and retry if it's the problem
-    sed -i '/\[chaotic-aur\]/,/^$/d' /etc/pacman.conf
+    echo "Some repos failed. Removing Chaotic-AUR and retrying..."
+    sed -i '/\[chaotic-aur\]/,/^Server/d' /etc/pacman.conf
     sed -i '/chaotic-aur/d' /etc/pacman.conf
     pacman -Sy --noconfirm
 }
 
-# ── 5. Install archiso and build dependencies ────────────────────
-echo "[5/7] Installing archiso and build tools..."
-pacman -S --noconfirm --needed archiso arch-install-scripts git base-devel squashfs-tools dosfstools mtools xorriso grub syslinux
+# Install archiso and build tools (these are in [extra])
+echo "Installing archiso..."
+pacman -S --noconfirm --needed archiso arch-install-scripts git
 
-# Verify mkarchiso exists
-which mkarchiso
-echo "mkarchiso found! Proceeding with build..."
+which mkarchiso && echo "mkarchiso found!" || {
+    echo "ERROR: mkarchiso not found after install!"
+    exit 1
+}
 
-# ── 6. Prepare profile for mkarchiso ─────────────────────────────
+# ── 6. Prepare profile ────────────────────────────────────────────
 echo "[6/7] Preparing AetherOS profile..."
 
-# Ensure profiledef.sh uses correct shebang
-sed -i 's|^#!/usr/bash|#!/bin/bash|' "${PROFILE_DIR}/profiledef.sh" || true
-
-# Make all scripts executable
-find "${PROFILE_DIR}" -name "*.sh" -exec chmod +x {} \; || true
+# Make scripts executable
+find "${PROFILE_DIR}" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 find "${PROFILE_DIR}/airootfs/usr/local/bin" -type f -exec chmod +x {} \; 2>/dev/null || true
 find "${PROFILE_DIR}/airootfs/etc/aetheros" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
-# Ensure /etc/sudoers has correct permissions (mkarchiso checks this)
-chmod 0440 "${PROFILE_DIR}/airootfs/etc/sudoers" 2>/dev/null || true
-
-# Copy Chaotic-AUR conf into profile's pacman.d
-mkdir -p "${PROFILE_DIR}/airootfs/etc/pacman.d/"
-if [ -f "${PROFILE_DIR}/airootfs/etc/pacman.d/chaotic-aur.conf" ]; then
-    echo "Chaotic-AUR conf already in profile"
-else
-    echo "Adding Chaotic-AUR conf to profile"
-    cat > "${PROFILE_DIR}/airootfs/etc/pacman.d/chaotic-aur.conf" << 'CHAOTIC'
-[chaotic-aur]
-SigLevel = Required DatabaseOptional
-Server = https://cdn-mirror.chaotic.cx/$repo/$arch
-CHAOTIC
+# Ensure /etc/sudoers exists with correct permissions
+if [ -f "${PROFILE_DIR}/airootfs/etc/sudoers" ]; then
+    chmod 0440 "${PROFILE_DIR}/airootfs/etc/sudoers"
 fi
 
-# Ensure the profile's pacman.conf includes Chaotic-AUR
-grep -q 'chaotic-aur' "${PROFILE_DIR}/pacman.conf" || {
-    echo "Adding Chaotic-AUR to profile pacman.conf"
-    echo '' >> "${PROFILE_DIR}/pacman.conf"
-    echo '[chaotic-aur]' >> "${PROFILE_DIR}/pacman.conf"
-    echo 'SigLevel = Required DatabaseOptional' >> "${PROFILE_DIR}/pacman.conf"
-    echo 'Server = https://cdn-mirror.chaotic.cx/$repo/$arch' >> "${PROFILE_DIR}/pacman.conf"
-}
-
-echo "Profile structure:"
+# Verify profile structure
+echo "Profile contents:"
 ls "${PROFILE_DIR}/"
+echo "airootfs contents:"
 ls "${PROFILE_DIR}/airootfs/" || echo "No airootfs"
 
-# ── 7. Build the ISO with mkarchiso ──────────────────────────────
+# ── 7. Build the ISO ──────────────────────────────────────────────
 echo "[7/7] Building ISO with mkarchiso..."
-echo "This step takes 30-60 minutes..."
+echo "This takes 30-60 minutes. Starting..."
 echo ""
 
 mkarchiso -v -w "${BUILD_DIR}/work" -o "${BUILD_DIR}/out" "${PROFILE_DIR}"
@@ -118,7 +124,4 @@ echo ""
 echo "╔══════════════════════════════════════════════╗"
 echo "║        AetherOS ISO Build Complete!           ║"
 echo "╚══════════════════════════════════════════════╝"
-echo ""
 ls -lh "${BUILD_DIR}/out/"
-echo ""
-echo "ISO file: $(ls ${BUILD_DIR}/out/*.iso)"

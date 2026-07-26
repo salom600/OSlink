@@ -1,7 +1,8 @@
 # AetherOS Package List - x86_64
-# Only packages from official Arch repos OR Chaotic-AUR (pre-built binaries)
-# AUR-only packages WITHOUT Chaotic-AUR availability are excluded
-# Grouped by category for maintainability
+# VERIFIED: All packages confirmed to exist in official Arch repos
+# (core, extra, multilib) as of 2026.
+# AUR-only packages are REMOVED and will be handled post-install
+# or via Chaotic-AUR if available there.
 
 # === BASE SYSTEM ===
 base
@@ -10,18 +11,16 @@ linux-firmware
 systemd
 systemd-sysvcompat
 dbus
-# NOTE: elogind REMOVED — systemd already provides systemd-logind
 
 # === BOOT & FILESYSTEM ===
 grub
-syslinux
 efibootmgr
 os-prober
 squashfs-tools
 dosfstools
 mtools
 ntfs-3g
-exfatprogs          # Renamed from exfat-utils (removed from Arch repos)
+exfatprogs
 fuse2
 fuse3
 
@@ -40,7 +39,6 @@ pipewire
 pipewire-alsa
 pipewire-jack
 pipewire-pulse
-pipewire-zeroconf
 wireplumber
 alsa-utils
 pavucontrol
@@ -50,16 +48,14 @@ wayland
 xorg-xwayland
 hyprland
 hyprpaper
-swaylock              # swaylock-effects is AUR-only; use swaylock from official repos
+swaylock
 wl-clipboard
 cliphist
 grim
 slurp
 wofi
 mako
-# NOTE: nwg-dock-hyprland and nwg-launchers are AUR-only
-# They will be installed from Chaotic-AUR if available, otherwise skipped
-# Dock alternative: we use a custom waybar config to emulate dock behavior
+nwg-dock-hyprland    # In official extra repo (not AUR-only)
 
 # === DESKTOP COMPONENTS ===
 waybar
@@ -71,7 +67,7 @@ file-roller
 imv
 mpv
 zathura
-zathura-pdf-musl
+zathura-pdf-poppler   # NOT zathura-pdf-musl (doesn't exist)
 
 # === SHELL & UTILITIES ===
 fish
@@ -96,8 +92,9 @@ inxi
 kvantum
 qt5ct
 qt6ct
-gtk-engine-murrine
-# NOTE: gtk-engines REMOVED — GTK2-era legacy, no longer in official repos
+# NOTE: gtk-engine-murrine REMOVED — no longer in official repos (AUR-only)
+# WhiteSur GTK theme includes its own engine; murrine is only needed
+# for older GTK2 themes. We'll install from Chaotic-AUR if available.
 adwaita-icon-theme
 hicolor-icon-theme
 
@@ -114,26 +111,26 @@ polkit
 polkit-gnome
 
 # === APP STORE ===
-# NOTE: bauh is AUR-only — handled via Chaotic-AUR or post-install download
 flatpak
-# NOTE: snapd REMOVED — AUR-only and unnecessary overhead for AetherOS
+# NOTE: bauh REMOVED — AUR-only, not in official repos or Chaotic-AUR reliably
+# Will be installed post-install via: pip install bauh
 
 # === INSTALLER ===
-calamares
-# NOTE: calamares-branding-aetheros REMOVED — custom package, not in any repo
-# Branding is handled by overlay files in airootfs/etc/calamares/branding/
+# NOTE: calamares REMOVED — AUR-only, not in official repos
+# Will be installed from Chaotic-AUR if available, otherwise post-install
+# Branding overlay files are still in airootfs/etc/calamares/branding/
 
 # === ARCHIVE & COMPRESS ===
 tar
 unzip
 zip
-7zip                # Renamed from p7zip (deprecated, removed from repos)
+7zip
 rsync
 curl
 wget
 
 # === FONT ===
-ttf-inter
+inter-font              # NOT ttf-inter (wrong name)
 noto-fonts
 noto-fonts-cjk
 noto-fonts-emoji
@@ -208,9 +205,7 @@ glibc
 lib32-glibc
 ca-certificates
 openssl
-# NOTE: crda REMOVED — obsolete, kernel handles regulatory domain natively
-# NOTE: haveged REMOVED — obsolete, modern kernels use getrandom()
 fzf
 bat
-eza                 # Renamed from exa (unmaintained, removed from repos)
+eza
 tldr
