@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.reddit.com/r/archlinux/comments/azrnyh/help_mount_new_root_wrong_fs_emergency_shell",
+    "name": "[help] mount new_root wrong fs (), emergency shell",
+    "snippet": "I get an error something like mount new_root wrong fstype bad option bad superblock. The mount new_root wrong fstype part is there for sure, I am not 100% on ...",
+    "host_name": "www.reddit.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://bbs.archlinux.org/viewtopic.php?id=284062",
+    "name": "root device not found. Skipping fsck",
+    "snippet": "Mar 6, 2023 — I tried to chroot into the system and reinstall the kernel and systemd-boot or change the `arch.conf` file to point to the root device with labels or name but ...",
+    "host_name": "bbs.archlinux.org",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://amini-allight.org/post/fixing-failed-to-mount-on-real-root",
+    "name": "Fixing \"failed to mount on real root\" - Amini Allight",
+    "snippet": "Oct 12, 2023 — Skipping fsck . You are now being dropped into an emergency shell. what's going on is you have a corrupt \"initramfs\". The fix is fortunately ...",
+    "host_name": "amini-allight.org",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://superuser.com/questions/1560686/device-not-found-arch-linux-drops-me-into-emergency-shell",
+    "name": "Device not found. Arch Linux drops me into emergency shell",
+    "snippet": "Jun 14, 2020 — I tried to reboot my laptop and had the following message greet me : Starting version 245.6-6-arch ERROR: resume: hibernation device '/dev/mapper/arch-swap' ...",
+    "host_name": "superuser.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=Uu8eNNzFov8",
+    "name": "Can't boot into Arch Linux? Here's how to fix it.",
+    "snippet": "In this video, I show how to fix Arch Linux when you can't boot into it. Timestamps: 00:00 Intro 01:25 Boot into Arch Linux with a live ISO ...",
+    "host_name": "www.youtube.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://unix.stackexchange.com/questions/364439/how-to-manually-boot-arch-linux-from-preboot-emergency-shell",
+    "name": "How to manually boot Arch Linux from preboot emergency",
+    "snippet": "May 11, 2017 — I broke an Arch Linux installation. Let's say I made a typo in the PARTUUID string. The result is that the boot process can't mount the root file system ...",
+    "host_name": "unix.stackexchange.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=XXj-O-OkFLE",
+    "name": "How to Fix an Arch Linux System That Is Stuck in Emergency",
+    "snippet": "Step 1: Get the Arch Linux Live installation iso on a usb drive or sd card . Step 2: Start the live installation process. Step 3: activate your ...",
+    "host_name": "www.youtube.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://gist.github.com/kennychufk/2f8d8b964329d7906893d83c98313340",
+    "name": "Arch Linux troubleshooting",
+    "snippet": "Arch Linux troubleshooting. the disk label that fsck failed) You are being dropped to a recovery shell ), when trying to mount manually, solution: reset boot ...",
+    "host_name": "gist.github.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://superuser.com/questions/519784/error-installing-arch-linux",
+    "name": "Error installing Arch Linux",
+    "snippet": "Dec 15, 2012 — I am trying to install Arch Linux on my Acer Aspire 4830tg, but I keep running into problems. Some background knowledge: I am trying to install Arch off ...",
+    "host_name": "superuser.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://bbs.archlinux.org/viewtopic.php?id=207373",
+    "name": "[Solved] cannot boot, ERROR: device \"\" not found, skipping",
+    "snippet": "Jan 10, 2016 — A chroot from a usb iso and pacman -S linux fixes it. Sounds like /boot is not mounted properly. Have you ever been able to boot without error ...",
+    "host_name": "bbs.archlinux.org",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

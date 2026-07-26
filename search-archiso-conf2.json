@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://bbs.archlinux.org/viewtopic.php?id=170106",
+    "name": "[SOLVED] Archiso and mkinitcpio's timestamp hook",
+    "snippet": "Sep 21, 2013 — So the fix was simple; I simply removed the timestamp hook from mkinitcpio . conf with: live/ releng / mkinitcpio . conf \" This fixed the Archiso ...",
+    "host_name": "bbs.archlinux.org",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/archlinux/archiso/blob/master/CHANGELOG.rst",
+    "name": "CHANGELOG.rst - archlinux/archiso",
+    "snippet": "Use mkinitcpio's microcode hook instead of external microcode images to simplify boot loader configuration. Custom PXE setups will need to update their boot ... Read more",
+    "host_name": "github.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://bbs.archlinux32.org/viewtopic.php?id=3003",
+    "name": "Where can I find mkinitcpio-archiso? [Solved] - Arch Linux 32",
+    "snippet": "Nov 28, 2020 — I am trying to figure out how 32 bit version iso is created, so could do with a little help. Have found releng and installed ... Read more",
+    "host_name": "bbs.archlinux32.org",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/archlinux/mkinitcpio-archiso",
+    "name": "archlinux/mkinitcpio-archiso: Initcpio scripts used by",
+    "snippet": "The mkinitcpio-archiso project provides initcpio integration for archiso . The scripts offer functionality for an environment, that is running in early user ... Read more",
+    "host_name": "github.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/archlinux/comments/1b99y0h/new_changes_to_mkinitcpioconf",
+    "name": "New changes to mkinitcpio.conf : r/archlinux",
+    "snippet": "Microcode was added to HOOKS in mkinitcpio . conf which was written in archlinux news. But there are more changes I like to understand. keyboard was after block ... Read more",
+    "host_name": "www.reddit.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  }
+]

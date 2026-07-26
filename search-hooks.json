@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://www.reddit.com/r/archlinux/comments/1h56ge6/mkinitcpio_fails_no_errors",
+    "name": "Mkinitcpio fails, no errors : r/archlinux",
+    "snippet": "Generating my fallback image using mkinitcpio hangs endlessly on the autodetect hook . This is very bad because this will a) probably result in an unusable ... Read more",
+    "host_name": "www.reddit.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://wiki.archlinux.org/title/Mkinitcpio",
+    "name": "mkinitcpio - ArchWiki",
+    "snippet": "Jun 26, 2026 — A preset is simply a list of information required to create initial ramdisk images, The HOOKS array is the most important setting in the file. ...\nJun 26, 2026 — The default HOOKS setting should be sufficient for most simple memdisk , sleep and strip , find out if dmraid , etc. work/are needed for ...",
+    "host_name": "wiki.archlinux.org",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.endeavouros.com/t/mkinitcpio-update-and-changes-may-need-some-manual-intervention/51879?page=2",
+    "name": "Mkinitcpio update and changes may need some manual",
+    "snippet": "Mar 4, 2024 — If you've updated mkinitcpio to the latest version, reinstalling the kernel (after adding microcode to HOOKS in /etc/ mkinitcpio . conf ) will suffice. Read more",
+    "host_name": "forum.endeavouros.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/archlinux/mkinitcpio/blob/master/mkinitcpio.conf",
+    "name": "mkinitcpio/mkinitcpio.conf at master · archlinux/mkinitcpio",
+    "snippet": "This is the most important setting in this file. The HOOKS control the modules and scripts added to the image, and what happens at boot time. Read more",
+    "host_name": "github.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.manjaro.org/t/which-hooks-should-mkinitcpio-conf-have/143275",
+    "name": "Which hooks should mkinitcpio.conf have? - Support",
+    "snippet": "Jun 29, 2023 — Hi all, Which Hooks should /etc/ mkinitcpio . conf be loaded with? I read in /etc/ default /grub that fsck can be skipped, for instance if ...",
+    "host_name": "forum.manjaro.org",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://man.archlinux.org/man/mkinitcpio.8.en",
+    "name": "mkinitcpio(8) - Arch manual pages",
+    "snippet": "Creates an initial ramdisk environment for booting the Linux kernel. mkinitcpio allows for easy extension with custom hooks , has autodetection at runtime, and ...\nmkinitcpio allows for easy extension with custom hooks , / mkinitcpio . conf . HOOKS Runtime hooks . Default configuration file for mkinitcpio . build time hooks .",
+    "host_name": "man.archlinux.org",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://bbs.archlinux32.org/viewtopic.php?id=3003",
+    "name": "Where can I find mkinitcpio-archiso? [Solved] - Arch Linux 32",
+    "snippet": "Nov 28, 2020 — I am trying to figure out how 32 bit version iso is created, so could do with a little help. Have found releng and installed ... Read more",
+    "host_name": "bbs.archlinux32.org",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.cheat-sheets.org/project/tldr/command/mkinitcpio/os/linux",
+    "name": "mkinitcpio TLDR page",
+    "snippet": "mkinitcpio Generates initial ramdisk environments for booting the Linux kernel based on the specified preset (s). on the linux - lts preset : List all available  ...",
+    "host_name": "www.cheat-sheets.org",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]
