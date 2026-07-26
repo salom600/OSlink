@@ -107,3 +107,24 @@ Stage Summary:
   to first-boot.sh for post-install installation.
 - Next potential issue: Chaotic-AUR database sync during mkarchiso build
   (TrustAll SigLevel should bypass key verification)
+---
+Task ID: boot-fix
+Agent: Super Z (main)
+Task: Fix BIOS and UEFI boot failures in AetherOS ISO
+
+Work Log:
+- User reported two boot failures: BIOS ("vmlinuz-linux-lts failed: No such file") and UEFI ("Reboot Into Firmware Interface" only)
+- Fetched archiso mkarchiso source code from GitHub to understand kernel placement
+- Discovered mkarchiso places kernel at ${install_dir}/boot/${arch}/ NOT ${install_dir}/boot/
+- Our configs referenced /aetheros/boot/vmlinuz-linux-lts but actual path is /aetheros/boot/x86_64/vmlinuz-linux-lts
+- Also found placeholder syntax errors: %YEAR% and %ISO_LABEL% are not valid; correct placeholders are %ARCHISO_LABEL%, %INSTALL_DIR%, %ARCH%
+- Fixed all three boot config files: syslinux.cfg, aetheros.conf, aetheros-safe.conf
+- Removed non-existent MENU BACKGROUND and memtest labels from syslinux.cfg
+- Pushed fix to GitHub (commit b9d308c)
+
+Stage Summary:
+- Root cause: missing /x86_64/ subdirectory in kernel paths + wrong archiso placeholder syntax
+- Both BIOS and UEFI failures caused by same issue
+- Fix: use %INSTALL_DIR%/boot/%ARCH%/vmlinuz-linux-lts in all boot configs
+- Fix: use %ARCHISO_LABEL% for ISO label (not %YEAR% or %ISO_LABEL%)
+- Fix: use %INSTALL_DIR% for archisobasedir (not hardcoded "aetheros")

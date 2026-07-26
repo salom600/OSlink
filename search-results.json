@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://bbs.archlinux.org/viewtopic.php?id=266385",
+    "name": "SOLVED Creating a custom ArchISO with LTS kernel?",
+    "snippet": "May 15, 2021 — SOLUTION: It is possible to modify the archiso and syslinux configuration files to create a custom ISO with the LTS kernel and ZFS.\nSOLUTION: It is possible to modify the archiso and syslinux configuration files to create a custom ISO with the LTS kernel and ZFS. How to build ArchISO with LTS kernel? / Installation / Arch Linux ... Problems getting linux-lts on an Archiso More results from bbs.archlinux.org",
+    "host_name": "bbs.archlinux.org",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/archlinux/comments/gex8r3/error_running_build_on_archiso",
+    "name": "Error running ./build on archiso : r/archlinux",
+    "snippet": "I&#39;m trying to create my own arch iso with archiso . vmlinuz - linux … specified kernel image does not exist: busy. Any idea what is going on? ...",
+    "host_name": "www.reddit.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=rTQ6x5pFLts",
+    "name": "I Tried to Build a Custom Arch Linux ISO (Kinda Easy?)",
+    "snippet": "Ever wanted to make your **own Arch Linux ISO ** *custom Arch ISO* from scratch using the official `archiso` tool. Setting up `archiso`. A ...\ndoes this work on a VM, like can i just run ARCHiso on it or do i like need to install arch on a VM, and then do that on the command line or ...",
+    "host_name": "www.youtube.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://unix.stackexchange.com/questions/284617/how-to-switch-arch-linux-to-lts-kernel",
+    "name": "How to switch arch linux to lts kernel?",
+    "snippet": "May 21, 2016 — I'm running a headless server installation of arch linux. The high rate of kernel upgrades caused me some maintainance headache and I therefore wish to ...\nYou will need to update your bootloader's configuration file to use the LTS kernel and ram disk: vmlinuz-linux-lts and initramfs-linux-lts.img.",
+    "host_name": "unix.stackexchange.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/archlinux/archiso/blob/master/archiso/mkarchiso",
+    "name": "archiso/archiso/mkarchiso at master · archlinux/archiso",
+    "snippet": "Official archiso scripts Repository. All files will be located here. vmlinuz -\"* to allow adding custom files when repacking the ISO.\nOfficial archiso scripts … vmlinuz-\"* and directory entries and to allow adding custom files when repacking the ISO.",
+    "host_name": "github.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://wiki.archlinux.org/title/Archiso",
+    "name": "archiso - ArchWiki",
+    "snippet": "Jun 24, 2026 — Archiso is a highly-customizable tool for building Arch Linux live CD/USB ISO images, netboot artifacts and bootstrap tarballs. Read more",
+    "host_name": "wiki.archlinux.org",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://serverless.industries/2024/12/30/custom-archiso.en.html",
+    "name": "Use archiso for custom Linux boot disks",
+    "snippet": "Dec 30, 2024 — The Arch Linux package archiso provides the tool mkarchiso . To begin with a custom ISO image, the profile which is also used to create the official Arch Linux ... Read more\nThe Arch Linux package archiso provides the tool mkarchiso. To begin with a custom ISO image, the profile which is also used to create the official Arch Linux ...",
+    "host_name": "serverless.industries",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.facebook.com/groups/linuxpc/posts/26126854943584558",
+    "name": "Building custom Arch Linux ISO with daily driver packages",
+    "snippet": "I created with archiso a custom Arch Linux ISO image. I am concened my custom profil will to create a bootable Arch Linux ISO from a running ...\nAnybody knows how can i create bootable iso file from my currently running system. I install arch and configured with my needs, now i want to ...",
+    "host_name": "www.facebook.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://flouda.net/knowledge-base/linux/arch-linux-iso",
+    "name": "Creating Custom Arch Linux ISO Images with Local",
+    "snippet": "Jul 15, 2025 — This document provides comprehensive instructions for creating custom Arch Linux ISO images that include live boot capabilities, local package ... Read more",
+    "host_name": "flouda.net",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/archlinux/comments/3jb37e/how_do_i_generate_vmlinuzlinux_with_a_different",
+    "name": "How do I generate vmlinuz-linux with a different name during an",
+    "snippet": "I am installing another Arch distro on to my laptop, to use with xen as a dom0. I figured out that when I create the initramfs-linux.img ... Is there any way to add another distro's kernel image to a custom ... Error running ./build on archiso : r/archlinux - Reddit More results from www.reddit.com",
+    "host_name": "www.reddit.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]
