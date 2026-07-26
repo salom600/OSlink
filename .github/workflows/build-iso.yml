@@ -133,6 +133,9 @@ jobs:
       - name: Verify ISO and Generate Checksums
         run: |
           if ls ${BUILD_DIR}/out/*.iso 1>/dev/null 2>&1; then
+            # Fix ownership: Docker + sudo created these as root-owned
+            sudo chown -R $(id -u):$(id -g) ${BUILD_DIR}/out/
+            
             ISO_FILE=$(ls ${BUILD_DIR}/out/*.iso | head -1)
             ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
             echo "ISO built successfully: $ISO_FILE ($ISO_SIZE)"
