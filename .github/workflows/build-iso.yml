@@ -44,9 +44,7 @@ jobs:
         continue-on-error: true
 
       - name: Check Disk Space
-        run: |
-          df -h
-          echo "Available space: $(df -h / | tail -1 | awk '{print $4}')"
+        run: df -h
 
       # ── Step 2: Checkout Repository ───────────────────────────
       - name: Checkout Repository
@@ -61,147 +59,57 @@ jobs:
           restore-keys: |
             pacman-v2-
 
-      # ── Step 4: Prepare Build Environment on Host ─────────────
+      # ── Step 4: Prepare Build Environment ─────────────────────
       - name: Prepare Build Directory
         run: |
           sudo mkdir -p ${BUILD_DIR}/work ${BUILD_DIR}/out ${BUILD_DIR}/profile
           sudo mkdir -p pacman-cache
-          # Copy repository files to build area
-          sudo cp -r archiso/ ${BUILD_DIR}/profile/
-          sudo cp -r scripts/ ${BUILD_DIR}/scripts/ 2>/dev/null || true
-          sudo cp -r overlays/ ${BUILD_DIR}/overlays/ 2>/dev/null || true
+
+          # IMPORTANT: rsync copies CONTENTS of archiso/ INTO profile/,
+          # not the archiso/ directory itself. cp -r would nest it wrong.
+          sudo rsync -a archiso/ ${BUILD_DIR}/profile/
+          sudo rsync -a scripts/ ${BUILD_DIR}/scripts/ 2>/dev/null || true
+          sudo rsync -a overlays/ ${BUILD_DIR}/overlays/ 2>/dev/null || true
+
+          # Verify profile structure matches mkarchiso expectations
+          echo "=== Profile structure ==="
+          ls ${BUILD_DIR}/profile/
+          echo "=== airootfs ==="
+          ls ${BUILD_DIR}/profile/airootfs/ || echo "No airootfs dir"
+          echo "=== usr/local/bin ==="
+          ls ${BUILD_DIR}/profile/airootfs/usr/local/bin/ 2>/dev/null || echo "No bin dir"
+
           # Make scripts executable
-          sudo find ${BUILD_DIR} -name "*.sh" -exec chmod +x {} \;
-          sudo find ${BUILD_DIR}/profile/airootfs/usr/local/bin -type f -exec chmod +x {} \;
-          sudo find ${BUILD_DIR}/profile/airootfs/etc/aetheros -name "*.sh" -exec chmod +x {} \;
+          sudo find ${BUILD_DIR}/profile -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+          sudo find ${BUILD_DIR}/profile/airootfs/usr/local/bin -type f -exec chmod +x {} \; 2>/dev/null || true
+          sudo find ${BUILD_DIR}/profile/airootfs/etc/aetheros -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
-      # ── Step 5: Build Inside Arch Linux Docker Container ──────
-      # The entire archiso/pacman build happens inside an Arch container.
-      # Ubuntu host is only used for disk space management and cache.
-      - name: Initialize Arch Linux Container
-        run: |
-          # Pull the latest Arch Linux Docker image
-          docker pull archlinux:latest
-
-          # Verify Docker is working
-          docker run --rm archlinux:latest pacman --version
-
-      - name: Initialize Pacman Keyring & Repos
-        run: |
-          docker run --rm \
-            -v ${BUILD_DIR}:${BUILD_DIR} \
-            -v pacman-cache:/var/cache/pacman/pkg \
-            -v ${PWD}/archiso/pacman.conf:/etc/pacman.conf \
-            archlinux:latest \
-            bash -c "
-              # Initialize pacman keyring
-              pacman-key --init
-              pacman-key --populate archlinux
-
-              # Add Chaotic-AUR keyring
-              pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888 || true
-              pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888 || true
-
-              # Setup mirrorlist
-              echo 'Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch' > /etc/pacman.d/mirrorlist
-              echo 'Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch' >> /etc/pacman.d/mirrorlist
-
-              # Update package databases
-              pacman -Sy --noconfirm
-
-              echo 'Pacman keyring initialized successfully'
-            "
-
-      - name: Install archiso Build Tool
-        run: |
-          docker run --rm \
-            -v pacman-cache:/var/cache/pacman/pkg \
-            -v ${PWD}/archiso/pacman.conf:/etc/pacman.conf \
-            archlinux:latest \
-            bash -c "
-              pacman-key --init
-              pacman-key --populate archlinux
-              pacman -Sy --noconfirm archiso arch-install-scripts git
-              which mkarchiso && echo 'mkarchiso found' || echo 'mkarchiso NOT found'
-            "
-
-      # ── Step 6: Build the ISO inside Arch Container ───────────
+      # ── Step 5: Build ISO Inside Arch Linux Docker ────────────
+      # Single consolidated Docker run handles: pacman init, archiso install, ISO build
       - name: Build AetherOS ISO
         run: |
-          # This is the main build step. We run mkarchiso inside the Arch container
-          # with volume mounts for the profile, work directory, and output directory.
+          # Pull Arch Linux Docker image
+          docker pull archlinux:latest
+
+          # Single Docker run for the entire build process
+          # All state (keyring, archiso install, mkarchiso) persists in this container
           docker run --rm \
+            --privileged \
             -v ${BUILD_DIR}/profile:${BUILD_DIR}/profile \
             -v ${BUILD_DIR}/work:${BUILD_DIR}/work \
             -v ${BUILD_DIR}/out:${BUILD_DIR}/out \
             -v pacman-cache:/var/cache/pacman/pkg \
-            -v ${PWD}/archiso/pacman.conf:/etc/pacman.conf \
-            -v ${PWD}/archiso/airootfs/etc/pacman.d/chaotic-aur.conf:/etc/pacman.d/chaotic-aur.conf \
             archlinux:latest \
-            bash -c "
-              set -e
+            bash /tmp/aetheros-build/profile/airootfs/usr/local/bin/aetheros-build-helper.sh
 
-              echo '=== AetherOS ISO Build ==='
-
-              # Re-initialize keyring (Docker containers start fresh)
-              pacman-key --init
-              pacman-key --populate archlinux
-
-              # Add Chaotic-AUR key
-              pacman-key --recv-key FBA220DFC832C11735C747735D658004B10F7888 || true
-              pacman-key --lsign-key FBA220DFC832C11735C747735D658004B10F7888 || true
-
-              # Setup mirrorlist
-              echo 'Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch' > /etc/pacman.d/mirrorlist
-              echo 'Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch' >> /etc/pacman.d/mirrorlist
-
-              # Ensure Chaotic-AUR repo is in pacman.conf
-              grep -q 'chaotic-aur' /etc/pacman.conf || {
-                echo '' >> /etc/pacman.conf
-                echo '[chaotic-aur]' >> /etc/pacman.conf
-                echo 'SigLevel = Required DatabaseOptional' >> /etc/pacman.conf
-                echo 'Server = https://cdn-mirror.chaotic.cx/\$repo/\$arch' >> /etc/pacman.conf
-              }
-
-              # Update databases
-              pacman -Sy --noconfirm
-
-              # Install archiso (required for mkarchiso)
-              pacman -S --noconfirm --needed archiso arch-install-scripts git
-
-              # Verify mkarchiso exists
-              which mkarchiso
-              echo 'mkarchiso found! Proceeding with build...'
-
-              # Fix profiledef.sh syntax (must be bash, not zsh)
-              sed -i 's|^#!/usr/bash|#!/bin/bash|' ${BUILD_DIR}/profile/profiledef.sh || true
-
-              # Make sure scripts are executable inside the container
-              find ${BUILD_DIR}/profile -name '*.sh' -exec chmod +x {} \;
-              find ${BUILD_DIR}/profile/airootfs/usr/local/bin -type f -exec chmod +x {} \;
-
-              # Copy Chaotic-AUR conf into the profile's pacman.d
-              mkdir -p ${BUILD_DIR}/profile/airootfs/etc/pacman.d/
-              cp /etc/pacman.d/chaotic-aur.conf ${BUILD_DIR}/profile/airootfs/etc/pacman.d/chaotic-aur.conf || true
-
-              # Build the ISO using mkarchiso
-              # -v = verbose, -w = work dir, -o = output dir
-              mkarchiso -v -w ${BUILD_DIR}/work -o ${BUILD_DIR}/out ${BUILD_DIR}/profile
-
-              echo '=== Build Complete ==='
-              ls -lh ${BUILD_DIR}/out/
-            "
-
-      # ── Step 7: Verify ISO and Generate Checksums ─────────────
+      # ── Step 6: Verify ISO ────────────────────────────────────
       - name: Verify ISO and Generate Checksums
         run: |
-          # Check if ISO was produced
           if ls ${BUILD_DIR}/out/*.iso 1>/dev/null 2>&1; then
             ISO_FILE=$(ls ${BUILD_DIR}/out/*.iso | head -1)
             ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
             echo "ISO built successfully: $ISO_FILE ($ISO_SIZE)"
             
-            # Generate checksums
             cd ${BUILD_DIR}/out
             sha256sum *.iso > SHA256SUMS
             md5sum *.iso > MD5SUMS
@@ -212,12 +120,12 @@ jobs:
             cat MD5SUMS
           else
             echo "ERROR: No ISO file found in ${BUILD_DIR}/out/"
-            ls -la ${BUILD_DIR}/out/ || echo "Output directory does not exist"
-            ls -la ${BUILD_DIR}/work/ || echo "Work directory does not exist"
+            ls -la ${BUILD_DIR}/out/ 2>/dev/null || echo "Output dir empty"
+            ls -la ${BUILD_DIR}/work/ 2>/dev/null || echo "Work dir empty"
             exit 1
           fi
 
-      # ── Step 8: Upload ISO to GitHub Releases ─────────────────
+      # ── Step 7: Upload to GitHub Releases ─────────────────────
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
@@ -232,7 +140,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 9: Upload ISO as Artifact ────────────────────────
+      # ── Step 8: Upload as Artifact ────────────────────────────
       - name: Upload ISO as Artifact
         uses: actions/upload-artifact@v4
         if: always()
@@ -243,9 +151,9 @@ jobs:
             /tmp/aetheros-build/out/SHA256SUMS
             /tmp/aetheros-build/out/MD5SUMS
           retention-days: 30
-          compression-level: 0  # ISO is already compressed
+          compression-level: 0
 
-      # ── Step 10: Build Report ──────────────────────────────────
+      # ── Step 9: Build Report ──────────────────────────────────
       - name: Generate Build Report
         if: always()
         run: |
@@ -253,19 +161,4 @@ jobs:
           echo "Build Date: $(date)"
           echo "Build Type: ${{ github.event.inputs.build_type || 'release' }}"
           echo "Commit: ${{ github.sha }}"
-          echo ""
-          
           df -h
-          echo ""
-          
-          if ls /tmp/aetheros-build/out/*.iso 1>/dev/null 2>&1; then
-            ISO_FILE=$(ls /tmp/aetheros-build/out/*.iso | head -1)
-            ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
-            echo "ISO File: $ISO_FILE"
-            echo "ISO Size: $ISO_SIZE"
-          else
-            echo "Warning: ISO not found or build failed"
-          fi
-          
-          echo ""
-          echo "=== Build Report Complete ==="
