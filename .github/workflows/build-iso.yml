@@ -29,22 +29,41 @@ jobs:
     timeout-minutes: 360  # 6 hours maximum
 
     steps:
-      # ── Step 1: Maximize Build Space ──────────────────────────
-      - name: Maximize Build Space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 512
-          swap-size-mb: 1024
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true'
-          build-mount-path: /tmp/aetheros-build
-        continue-on-error: true
+      # ── Step 1: Aggressive Disk Cleanup ────────────────────────
+      # Must happen BEFORE Docker pull. Free ~40GB by removing
+      # pre-installed GitHub Actions toolchains manually.
+      - name: Free Disk Space (Aggressive)
+        run: |
+          echo "=== Initial disk usage ==="
+          df -h /
+          echo ""
 
-      - name: Check Disk Space
-        run: df -h
+          # Remove the largest unused pre-installed packages
+          sudo rm -rf /usr/share/dotnet                     ~30GB
+          sudo rm -rf /usr/local/lib/android                 ~10GB  
+          sudo rm -rf /opt/ghc                               ~6GB
+          sudo rm -rf /usr/local/.ghcup                      ~2GB
+          sudo rm -rf /opt/hostedtoolcache                   ~10GB
+          sudo rm -rf /usr/lib/jvm                            ~2GB
+          sudo rm -rf /usr/share/swift                        ~3GB
+          sudo rm -rf /usr/local/share/powershell             ~2GB
+          sudo rm -rf /usr/share/codeql                       ~5GB
+
+          # Remove Docker images/containers that come pre-installed
+          docker system prune -af --volumes 2>/dev/null || true
+
+          # Remove apt cache
+          sudo apt-get clean
+          sudo rm -rf /var/cache/apt/archives
+
+          # Remove snap packages
+          sudo snap list --all | awk '{print $1, $2}' | while read name rev; do sudo snap remove "$name" --revision="$rev" 2>/dev/null; done || true
+          sudo rm -rf /snap /var/snap /home/snap
+
+          echo ""
+          echo "=== Disk usage after cleanup ==="
+          df -h /
+          echo "Available: $(df -BG / | tail -1 | awk '{print $4}')"
 
       # ── Step 2: Checkout Repository ───────────────────────────
       - name: Checkout Repository
@@ -59,24 +78,22 @@ jobs:
           restore-keys: |
             pacman-v2-
 
-      # ── Step 4: Prepare Build Environment ─────────────────────
+      # ── Step 4: Prepare Build Directory ───────────────────────
       - name: Prepare Build Directory
         run: |
           sudo mkdir -p ${BUILD_DIR}/work ${BUILD_DIR}/out ${BUILD_DIR}/profile
           sudo mkdir -p pacman-cache
 
-          # IMPORTANT: rsync copies CONTENTS of archiso/ INTO profile/,
-          # not the archiso/ directory itself. cp -r would nest it wrong.
+          # rsync copies CONTENTS of archiso/ INTO profile/,
+          # not the archiso/ directory itself
           sudo rsync -a archiso/ ${BUILD_DIR}/profile/
           sudo rsync -a scripts/ ${BUILD_DIR}/scripts/ 2>/dev/null || true
           sudo rsync -a overlays/ ${BUILD_DIR}/overlays/ 2>/dev/null || true
 
-          # Verify profile structure matches mkarchiso expectations
+          # Verify profile structure
           echo "=== Profile structure ==="
           ls ${BUILD_DIR}/profile/
-          echo "=== airootfs ==="
           ls ${BUILD_DIR}/profile/airootfs/ || echo "No airootfs dir"
-          echo "=== usr/local/bin ==="
           ls ${BUILD_DIR}/profile/airootfs/usr/local/bin/ 2>/dev/null || echo "No bin dir"
 
           # Make scripts executable
@@ -84,15 +101,22 @@ jobs:
           sudo find ${BUILD_DIR}/profile/airootfs/usr/local/bin -type f -exec chmod +x {} \; 2>/dev/null || true
           sudo find ${BUILD_DIR}/profile/airootfs/etc/aetheros -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
-      # ── Step 5: Build ISO Inside Arch Linux Docker ────────────
-      # Single consolidated Docker run handles: pacman init, archiso install, ISO build
+      # ── Step 5: Pull Arch Linux Docker Image ──────────────────
+      - name: Pull Arch Linux Docker Image
+        run: |
+          echo "=== Disk space before Docker pull ==="
+          df -h /
+          echo ""
+          docker pull archlinux:latest
+          echo "=== Disk space after Docker pull ==="
+          df -h /
+
+      # ── Step 6: Build ISO Inside Arch Container ───────────────
       - name: Build AetherOS ISO
         run: |
-          # Pull Arch Linux Docker image
-          docker pull archlinux:latest
+          echo "=== Disk space before build ==="
+          df -h /
 
-          # Single Docker run for the entire build process
-          # All state (keyring, archiso install, mkarchiso) persists in this container
           docker run --rm \
             --privileged \
             -v ${BUILD_DIR}/profile:${BUILD_DIR}/profile \
@@ -100,9 +124,12 @@ jobs:
             -v ${BUILD_DIR}/out:${BUILD_DIR}/out \
             -v pacman-cache:/var/cache/pacman/pkg \
             archlinux:latest \
-            bash /tmp/aetheros-build/profile/airootfs/usr/local/bin/aetheros-build-helper.sh
+            bash ${BUILD_DIR}/profile/airootfs/usr/local/bin/aetheros-build-helper.sh
 
-      # ── Step 6: Verify ISO ────────────────────────────────────
+          echo "=== Disk space after build ==="
+          df -h /
+
+      # ── Step 7: Verify ISO ────────────────────────────────────
       - name: Verify ISO and Generate Checksums
         run: |
           if ls ${BUILD_DIR}/out/*.iso 1>/dev/null 2>&1; then
@@ -119,13 +146,13 @@ jobs:
             echo "=== MD5 ==="
             cat MD5SUMS
           else
-            echo "ERROR: No ISO file found in ${BUILD_DIR}/out/"
-            ls -la ${BUILD_DIR}/out/ 2>/dev/null || echo "Output dir empty"
-            ls -la ${BUILD_DIR}/work/ 2>/dev/null || echo "Work dir empty"
+            echo "ERROR: No ISO file found"
+            ls -la ${BUILD_DIR}/out/ 2>/dev/null || true
+            ls -la ${BUILD_DIR}/work/ 2>/dev/null || true
             exit 1
           fi
 
-      # ── Step 7: Upload to GitHub Releases ─────────────────────
+      # ── Step 8: Upload to GitHub Releases ─────────────────────
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
@@ -140,7 +167,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 8: Upload as Artifact ────────────────────────────
+      # ── Step 9: Upload as Artifact ────────────────────────────
       - name: Upload ISO as Artifact
         uses: actions/upload-artifact@v4
         if: always()
@@ -153,12 +180,11 @@ jobs:
           retention-days: 30
           compression-level: 0
 
-      # ── Step 9: Build Report ──────────────────────────────────
+      # ── Step 10: Build Report ──────────────────────────────────
       - name: Generate Build Report
         if: always()
         run: |
           echo "=== AetherOS Build Report ==="
           echo "Build Date: $(date)"
-          echo "Build Type: ${{ github.event.inputs.build_type || 'release' }}"
           echo "Commit: ${{ github.sha }}"
           df -h
