@@ -1,8 +1,12 @@
 # AetherOS Package List - x86_64
-# VERIFIED: All packages confirmed to exist in official Arch repos
-# (core, extra, multilib) as of 2026.
-# AUR-only packages are REMOVED and will be handled post-install
-# or via Chaotic-AUR if available there.
+# CRITICAL: NO inline comments after package names!
+# archiso only supports # at the START of a line, not inline.
+# Inline comments get parsed as part of the package name, causing
+# "target not found" errors.
+#
+# AUR-only packages (eza, calamares, bauh, nwg-dock-hyprland,
+# gtk-engine-murrine) are REMOVED from this list and will be
+# installed post-install via Chaotic-AUR or first-boot.sh.
 
 # === BASE SYSTEM ===
 base
@@ -56,8 +60,6 @@ grim
 slurp
 wofi
 mako
-# NOTE: nwg-dock-hyprland REMOVED — AUR-only, not reliably in Chaotic-AUR
-# Will be installed post-install via: pacman -S nwg-dock-hyprland (from AUR/Chaotic-AUR)
 
 # === DESKTOP COMPONENTS ===
 waybar
@@ -69,7 +71,7 @@ file-roller
 imv
 mpv
 zathura
-zathura-pdf-poppler   # NOT zathura-pdf-musl (doesn't exist)
+zathura-pdf-mupdf
 
 # === SHELL & UTILITIES ===
 fish
@@ -94,9 +96,6 @@ inxi
 kvantum
 qt5ct
 qt6ct
-# NOTE: gtk-engine-murrine REMOVED — no longer in official repos (AUR-only)
-# WhiteSur GTK theme includes its own engine; murrine is only needed
-# for older GTK2 themes. We'll install from Chaotic-AUR if available.
 adwaita-icon-theme
 hicolor-icon-theme
 
@@ -114,13 +113,6 @@ polkit-gnome
 
 # === APP STORE ===
 flatpak
-# NOTE: bauh REMOVED — AUR-only, not in official repos or Chaotic-AUR reliably
-# Will be installed post-install via: pip install bauh
-
-# === INSTALLER ===
-# NOTE: calamares REMOVED — AUR-only, not in official repos
-# Will be installed from Chaotic-AUR if available, otherwise post-install
-# Branding overlay files are still in airootfs/etc/calamares/branding/
 
 # === ARCHIVE & COMPRESS ===
 tar
@@ -132,7 +124,7 @@ curl
 wget
 
 # === FONT ===
-inter-font              # NOT ttf-inter (wrong name)
+inter-font
 noto-fonts
 noto-fonts-cjk
 noto-fonts-emoji
@@ -155,7 +147,7 @@ lib32-mesa
 vulkan-mesa-layers
 lib32-vulkan-mesa-layers
 
-# === NVIDIA (optional, auto-detected on first boot) ===
+# === NVIDIA ===
 nvidia-dkms
 nvidia-utils
 lib32-nvidia-utils
@@ -188,7 +180,7 @@ earlyoom
 archiso
 arch-install-scripts
 
-# === DEVELOPMENT (minimal, for build support) ===
+# === DEVELOPMENT ===
 base-devel
 git
 cmake
@@ -208,5 +200,4 @@ ca-certificates
 openssl
 fzf
 bat
-eza    # From Chaotic-AUR (AUR-only, not in official repos)
 tldr
