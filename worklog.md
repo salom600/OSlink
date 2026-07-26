@@ -78,3 +78,32 @@ Stage Summary:
 - Also confirmed: bios.syslinux and uefi.systemd-boot ARE valid boot modes
   in current archiso (uefi-x64.* modes are deprecated, replaced by uefi.systemd-boot)
 - Next potential issue: Chaotic-AUR packages during mkarchiso install
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Fix 3 "target not found" package errors during mkarchiso install
+
+Work Log:
+- Analyzed the 3 failing packages: zathura-pdf-poppler, inter-font, eza
+- Used web-search to verify correct package names and repo membership
+- Found the REAL root cause: inline comments (# after package names) are
+  NOT supported by archiso's package list parser. mkarchiso reads the
+  FULL line including the comment as the package name.
+- ALL 3 failing packages had inline comments that made them unfindable.
+- Additionally, zathura-pdf-poppler was renamed to zathura-pdf-mupdf.
+- eza is AUR-only (not in official repos), removed from build package list.
+- Rewrote packages.x86_64: removed ALL inline comments, fixed names,
+  removed AUR-only packages.
+- Updated first-boot.sh to install AUR-only packages post-install:
+  eza, calamares, nwg-dock-hyprland (from Chaotic-AUR), bauh (via pip).
+
+Stage Summary:
+- 2 files changed, commit 6763f82 pushed to GitHub
+- Key lesson: archiso packages.x86_64 does NOT support inline comments.
+  Only # at the START of a line is supported. This caused 3 packages
+  with inline comments to be parsed incorrectly.
+- AUR-only packages (eza, calamares, bauh, nwg-dock-hyprland) deferred
+  to first-boot.sh for post-install installation.
+- Next potential issue: Chaotic-AUR database sync during mkarchiso build
+  (TrustAll SigLevel should bypass key verification)
